@@ -1,0 +1,7 @@
+{
+  "name": "Klipper LIS3DH",
+  "method": "lis2dw/dump_lis2dw",
+  "params": { "sensor": "lis3dh", "response_template": {} },
+  "data_path": "params.data",
+  "sample_columns": { "time": 0, "x": 1, "y": 2, "z": 3 }
+}

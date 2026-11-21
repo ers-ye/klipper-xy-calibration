@@ -1,0 +1,17 @@
+# B2K XY Calibration V0.1 — manual merge snippet only
+# Copy these sections into the EXISTING printer.cfg after checking conflicts.
+# Do not include this text file or replace the complete printer.cfg with it.
+# Replace ONLY <BOARD_GPIO_PLACEHOLDER> after checking the target board pin map.
+# This file intentionally contains one and only one gcode_button section.
+
+[b2k_xy_calibration]
+output_dir: ~/printer_data/logs/b2k_xy
+filename_prefix: b2k_xy
+
+[gcode_button b2k_probe]
+pin: <BOARD_GPIO_PLACEHOLDER>
+press_gcode: B2K_SWITCH_EVENT STATE=TRIGGERED
+release_gcode: B2K_SWITCH_EVENT STATE=RELEASED
+# Configure pull-up / inversion only after confirming the actual electrical wiring.
+
+# No movement is performed by this configuration or the plugin.

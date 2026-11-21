@@ -1,0 +1,7 @@
+{
+  "name": "Klipper ICM20948",
+  "method": "icm20948/dump_icm20948",
+  "params": { "sensor": "icm20948", "response_template": {} },
+  "data_path": "params.data",
+  "sample_columns": { "time": 0, "x": 1, "y": 2, "z": 3 }
+}

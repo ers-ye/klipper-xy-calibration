@@ -1,0 +1,16 @@
+{
+  "name": "Custom Klipper accelerometer",
+  "method": "your_driver/dump_your_driver",
+  "params": {
+    "sensor": "your_configured_sensor_name",
+    "response_template": {}
+  },
+  "data_path": "params.data",
+  "header_path": "result.header",
+  "sample_columns": {
+    "time": 0,
+    "x": 1,
+    "y": 2,
+    "z": 3
+  }
+}
