@@ -50,6 +50,8 @@ $env:B2K_PRINTER_HOST = "printer.local"
 node tools/belt_session.mjs --sensor-config=config/accelerometers/lis2dw.json
 ```
 
+**测量位置：**每次弹拨皮带前，确认机器已回零、移动路径无障碍，再用 Mainsail/Fluidd 的手动移动控件将喷头移动到 **X=150、Y=150 mm**。X、Y 两条皮带都在这个位置测量。宏会在 Console 再次提醒，但不会自动移动打印机；若机器未回零或路径不安全，不要移动或开始测量。
+
 保持这个进程运行，然后在 Mainsail/Fluidd Console 中：
 
 1. 输入 `BELT_X` 或 `BELT_Y`，选择要测的皮带。
@@ -59,13 +61,21 @@ node tools/belt_session.mjs --sensor-config=config/accelerometers/lis2dw.json
 
 默认 CSV 写入当前工作目录的 `outputs/`。宏只发开始和结束标记；采样、频谱计算和文件写入都由电脑上的 Node 采集器完成。此功能不移动机器，也不修改 `rotation_distance`、microsteps、加速度或 input-shaper 参数。
 
-## 安装单 GPIO 对刀仪事件插件（可选）
+## 安装 Klipper 插件
 
-1. 把 `klippy/extras/b2k_xy_calibration.py` 复制到目标 Klipper 安装的 `klippy/extras/` 目录。
-2. 根据 `config/printer.cfg.xy-calibration-manual-merge.txt` 手动合并插件配置和一个 `[gcode_button]` 到现有 `printer.cfg`。
-3. 将 `<BOARD_GPIO_PLACEHOLDER>` 替换为已核对的实际 GPIO 和电气极性设置。不要猜引脚。
-4. 重启 Klipper 并检查 `klippy.log`。
-5. 用 `QUERY_BUTTON BUTTON=b2k_probe` 确认开关状态。
+在打印机主机的 SSH 终端执行。先确认 Klipper 源码目录；下面的 `$HOME/klipper` 只是常见位置，若实际路径不同，先替换成已确认的路径：
+
+```sh
+git clone --depth 1 https://github.com/ers-ye/klipper-xy-calibration.git "$HOME/klipper-xy-calibration"
+export KLIPPER_DIR="$HOME/klipper"  # 改成已经确认的 Klipper 源码目录
+test -d "$KLIPPER_DIR/klippy/extras" || { echo "Klipper extras 目录不存在；请核对 KLIPPER_DIR" >&2; exit 1; }
+test ! -e "$KLIPPER_DIR/klippy/extras/b2k_xy_calibration.py" || { echo "插件文件已存在；停止以避免覆盖" >&2; exit 1; }
+install -m 0644 "$HOME/klipper-xy-calibration/klippy/extras/b2k_xy_calibration.py" "$KLIPPER_DIR/klippy/extras/b2k_xy_calibration.py"
+```
+
+安装命令只复制一个 Klipper extras 插件文件；不会改写 `printer.cfg`、自动重启 Klipper 或执行任何运动。若插件文件已经存在，命令会停止，不覆盖现有文件。然后根据 `config/printer.cfg.xy-calibration-manual-merge.txt`，手动合并插件配置和唯一一个 `[gcode_button]` 到现有 `printer.cfg`。
+
+将 `<BOARD_GPIO_PLACEHOLDER>` 替换为已核对的实际 GPIO 和电气极性设置。不要猜引脚。完成配置后，通过 Mainsail/Fluidd 执行 Firmware Restart，并检查 `klippy.log`；用 `QUERY_BUTTON BUTTON=b2k_probe` 确认开关状态。
 
 按钮回调记录的是 `host_estimate`，不是 MCU 精确锁存坐标。插件本身不触发运动。不要用 `FORCE_MOVE` 进行正常校准，也不要在未确认安全坐标和碰撞路径前运行自动运动。
 
@@ -83,6 +93,8 @@ B2K_CAL_START EXPERIMENT_ID=trident_x_001 TOOL_ID=T2 AXIS=X DIRECTION=POS DISTAN
 B2K_CAL_STOP
 B2K_CAL_REPORT
 ```
+
+皮带频率宏则使用 `BELT_X` 或 `BELT_Y` 开始一次实时采集，输入 `OK` 结束并保存 CSV；完整宏位于 `config/printer.cfg.belt-frequency-manual-merge.txt`，需要手动合并至原有 `printer.cfg`。操作步骤见[使用教程](docs/使用教程.md)。
 
 离线 CSV 分析：
 

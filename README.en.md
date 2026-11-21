@@ -28,13 +28,29 @@ Chinese guides: [Usage tutorial](docs/使用教程.md) · [Configuration tutoria
 - `tests/test_b2k_xy_calibration.py`: simulated unit tests; these do not connect to a printer or move hardware.
 - `LICENSE`, `NOTICE`, and `package.json`: Apache-2.0 project metadata; there are no third-party Node packages.
 
-## Install on the printer host
+## Install the Klipper plugin
+
+Run this in an SSH terminal on the printer host. Confirm the Klipper source directory first; `$HOME/klipper` below is only a common location and must be changed if your installation uses another path:
+
+```sh
+git clone --depth 1 https://github.com/ers-ye/klipper-xy-calibration.git "$HOME/klipper-xy-calibration"
+export KLIPPER_DIR="$HOME/klipper"  # set this to the verified Klipper source directory
+test -d "$KLIPPER_DIR/klippy/extras" || { echo "Klipper extras directory not found; check KLIPPER_DIR" >&2; exit 1; }
+test ! -e "$KLIPPER_DIR/klippy/extras/b2k_xy_calibration.py" || { echo "Plugin already exists; refusing to overwrite" >&2; exit 1; }
+install -m 0644 "$HOME/klipper-xy-calibration/klippy/extras/b2k_xy_calibration.py" "$KLIPPER_DIR/klippy/extras/b2k_xy_calibration.py"
+```
+
+This copies only the Klipper extras module. It does not modify `printer.cfg`, restart Klipper, or move the toolhead. If the target plugin file already exists, the command stops without replacing it. Next, manually merge the plugin section and the single `[gcode_button]` from `config/printer.cfg.xy-calibration-manual-merge.txt` into the existing `printer.cfg`.
+
+Replace `<BOARD_GPIO_PLACEHOLDER>` only after confirming the actual GPIO and electrical polarity. Do not guess the pin. After the manual configuration change, use Firmware Restart in Mainsail/Fluidd and inspect `klippy.log`; verify the button with `QUERY_BUTTON BUTTON=b2k_probe`.
+
+## Merge the printer configuration snippets
 
 1. Back up `printer.cfg` and confirm the running Klipper source path and version.
-2. Copy `klippy/extras/b2k_xy_calibration.py` into the active Klipper tree's `klippy/extras/` directory. Use the same owner and permissions as neighboring extras.
-3. Copy the required sections from the `config/printer.cfg.*.txt` manual-merge snippets directly into the existing `printer.cfg`; do not include the snippets or replace the full file. Replace `<BOARD_GPIO_PLACEHOLDER>` only after confirming the board pin assignment, electrical polarity, and whether a pull-up is required. Add only one `[gcode_button]` for this probe.
-4. Restart Klipper through the installed service or the front end's Firmware Restart control. Inspect `klippy.log` for import/config errors before proceeding.
-5. Verify the resting and manually actuated states with `QUERY_BUTTON BUTTON=b2k_probe`; do not begin a motion test until GPIO polarity and safe travel are independently confirmed.
+2. Copy the `BELT_X`, `BELT_Y`, and `OK` macro sections from `config/printer.cfg.belt-frequency-manual-merge.txt` into the existing `printer.cfg`.
+3. If you use the optional tool-setter logger, copy the `[b2k_xy_calibration]` section and its single `[gcode_button]` from `config/printer.cfg.xy-calibration-manual-merge.txt`. Do not include either snippet or replace the full config file.
+4. Replace `<BOARD_GPIO_PLACEHOLDER>` only after confirming the board pin assignment and electrical polarity. Configure exactly one button for the shared physical switch.
+5. Restart Klipper through the front end's Firmware Restart control. Inspect `klippy.log` for import/config errors. Verify the button with `QUERY_BUTTON BUTTON=b2k_probe`; do not begin a motion test until GPIO polarity and safe travel are independently confirmed.
 
 ## Marker commands (metadata only)
 
@@ -151,6 +167,8 @@ node tools/belt_session.mjs --host=YOUR_PRINTER_HOST --sensor-config=config/acce
 ```
 
 Keep that process running, then use the Mainsail/Fluidd Console:
+
+Before each pluck, confirm the printer is homed and the travel path is clear, then use the front end's manual controls to place the toolhead at **X=150, Y=150 mm**. Measure both belts at this same position. The macros repeat this reminder but never move the printer automatically. Do not move or measure if homing or clearance is uncertain.
 
 1. Enter `BELT_X` for the physical belt labelled X, or `BELT_Y` for the physical belt labelled Y.
 2. Pluck that belt once. The console receives a rolling frequency estimate about once per second while the capture runs.

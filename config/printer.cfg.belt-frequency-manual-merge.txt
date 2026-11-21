@@ -4,13 +4,15 @@
 # These macros only emit marker responses and never move the printer.
 
 [gcode_macro BELT_X]
-description: Start passive acceleration capture for belt X
+description: Start passive acceleration capture for belt X at the XY center
 gcode:
+  RESPOND TYPE=echo MSG="提示：请先确认喷头位于 X=150, Y=150 且路径安全；此宏不会自动移动"
   RESPOND TYPE=echo MSG="B2K_BELT_SESSION_START_X"
 
 [gcode_macro BELT_Y]
-description: Start passive acceleration capture for belt Y
+description: Start passive acceleration capture for belt Y at the XY center
 gcode:
+  RESPOND TYPE=echo MSG="提示：请先确认喷头位于 X=150, Y=150 且路径安全；此宏不会自动移动"
   RESPOND TYPE=echo MSG="B2K_BELT_SESSION_START_Y"
 
 [gcode_macro OK]
